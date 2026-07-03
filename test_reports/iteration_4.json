@@ -19,5 +19,5 @@
   "success_rate": {"backend": "100%", "frontend": "100%"},
   "retest_needed": false,
   "full_testing_deferred": true,
-  "notes": "Login endpoint returns key 'token' (not 'access_token'). Public URL used: https://tienda-electroyes.preview.emergentagent.com (from frontend/.env)."
+  "notes": "Login endpoint returns key 'token' (not 'access_token'). Public URL used: https://ecommerce-preview-35.preview.emergentagent.com (from frontend/.env)."
 }
