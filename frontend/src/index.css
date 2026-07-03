@@ -1,0 +1,157 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --------------- Electroyes brand tokens --------------- */
+@layer base {
+    :root {
+        /* Brand palette extracted from electroyes.com.ar */
+        --ey-coral: 6 87% 65%;          /* #F5675A */
+        --ey-coral-strong: 6 84% 58%;   /* #ee4d3e */
+        --ey-coral-soft: 6 100% 96%;    /* #ffefec */
+        --ey-cream: 12 60% 97%;         /* #fdf6f5 */
+        --ey-ink: 220 15% 12%;          /* #191d24 */
+        --ey-ink-soft: 220 8% 34%;      /* #4f545c */
+
+        --background: var(--ey-cream);
+        --foreground: var(--ey-ink);
+        --card: 0 0% 100%;
+        --card-foreground: var(--ey-ink);
+        --popover: 0 0% 100%;
+        --popover-foreground: var(--ey-ink);
+        --primary: var(--ey-coral);
+        --primary-foreground: 0 0% 100%;
+        --secondary: 0 0% 96.1%;
+        --secondary-foreground: var(--ey-ink);
+        --muted: 12 30% 94%;
+        --muted-foreground: var(--ey-ink-soft);
+        --accent: var(--ey-coral-soft);
+        --accent-foreground: var(--ey-coral-strong);
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 12 20% 88%;
+        --input: 12 20% 88%;
+        --ring: var(--ey-coral);
+        --radius: 0.75rem;
+    }
+}
+
+html, body, #root {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+}
+
+body {
+    margin: 0;
+    font-family: 'Manrope', 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
+}
+
+/* Import brand font */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+}
+
+/* ---------- Custom brand utilities ---------- */
+.btn-coral {
+    background: linear-gradient(135deg, #FF7B6E 0%, #F5675A 55%, #ee4d3e 100%);
+    color: #fff;
+    border-radius: 999px;
+    padding: 12px 28px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    box-shadow: 0 8px 20px -6px rgba(238, 77, 62, 0.45);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    cursor: pointer;
+}
+.btn-coral:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px -8px rgba(238, 77, 62, 0.55);
+}
+.btn-coral:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-ghost-coral {
+    background: transparent;
+    color: hsl(var(--ey-coral-strong));
+    border: 1.5px solid hsl(var(--ey-coral));
+    border-radius: 999px;
+    padding: 10px 22px;
+    font-weight: 600;
+    transition: background 0.2s;
+    cursor: pointer;
+}
+.btn-ghost-coral:hover { background: hsl(var(--ey-coral-soft)); }
+
+.hex-badge {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #FF7B6E 0%, #ee4d3e 100%);
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+}
+
+.card-product {
+    background: #fff;
+    border-radius: 16px;
+    padding: 14px;
+    border: 1px solid hsl(var(--border));
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.card-product:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 40px -18px rgba(238, 77, 62, 0.25);
+    border-color: hsl(var(--ey-coral));
+}
+
+.product-thumb {
+    aspect-ratio: 1 / 1;
+    background: hsl(var(--ey-cream));
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.product-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 0.4s ease;
+}
+.card-product:hover .product-thumb img {
+    transform: scale(1.04);
+}
+
+.fade-in {
+    animation: fadeIn 0.4s ease both;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Hide scrollbar for horizontal thumb strip */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }

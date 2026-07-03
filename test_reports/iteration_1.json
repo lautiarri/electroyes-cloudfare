@@ -1,0 +1,23 @@
+{
+  "summary": "First-finish smoke test for Electroyes /tienda. Backend: admin login/JWT/me, product CRUD (create/duplicate 400, unauth 401, GET public/by-code), orders (bad product 400, over-stock 400, valid 200 with stock decrement and email_sent=true), GET /api/orders auth-guarded. Frontend: catalog renders with EY badge and Carrito link, product detail add-to-cart works, cart-count-badge updates, cart persists across reload, checkout submits and reaches /tienda/confirmacion/{id} with order details, admin login → dashboard shows products + edit/delete testids and new-product-btn.",
+  "tested_scope": ["backend", "frontend", "auth", "integration"],
+  "passed": [
+    "POST /api/auth/admin/login: 200 with JWT for admin/electroyes2026; 401 on wrong password",
+    "GET /api/auth/admin/me: 401 without token, 200 {username:'admin'} with token",
+    "POST /api/products (admin): creates product; unauth returns 401; duplicate code returns 400",
+    "GET /api/products (public) 200; GET /api/products/T-001 (public) 200",
+    "POST /api/orders: bad product_id -> 400, quantity > stock -> 400, valid -> 200 with email_sent=true and stock decremented from 5 to 4 (then to 3 via UI order)",
+    "GET /api/orders: 401 without token, 200 with admin token",
+    "Frontend /tienda catalog renders with header-cart-link and product-card-T-001",
+    "Product detail /tienda/producto/T-001: add-to-cart-btn works, cart-count-badge shows 1, success toast displayed",
+    "Cart at /tienda/carrito shows generate-order-btn; cart persists across page reload (localStorage)",
+    "Checkout form (first_name/last_name/phone/email) submits and navigates to /tienda/confirmacion/{orderId} showing customer info, item, and total",
+    "Admin login page authenticates and lands on /tienda/admin with new-product-btn, edit-product-T-001, delete-product-T-001 testids"
+  ],
+  "failed": [],
+  "action_items": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true,
+  "notes": "Resend runs in sandbox; email_sent=true was returned by API (inbox not verified per instructions). Product T-001 was created via API for tests; admin panel confirmed it. No mocks used."
+}
