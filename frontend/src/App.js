@@ -10,6 +10,7 @@ import Checkout from "@/pages/Checkout";
 import OrderConfirmation from "@/pages/OrderConfirmation";
 import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
+import SiteHome from "@/pages/SiteHome";
 
 function App() {
   return (
@@ -17,7 +18,7 @@ function App() {
       <BrowserRouter>
         <Toaster position="top-right" richColors />
         <Routes>
-          <Route path="/" element={<Navigate to="/tienda" replace />} />
+          <Route path="/" element={<SiteHome />} />
           <Route
             path="/tienda"
             element={
