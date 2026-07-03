@@ -26,16 +26,19 @@ Build a new e-commerce section at `/tienda` inside the existing Electroyes site 
 - Checkout `/tienda/checkout` (name/lastname/phone/email) ✅
 - Order confirmation `/tienda/confirmacion/:id` ✅
 - Admin login `/tienda/admin/login` ✅
-- Admin dashboard `/tienda/admin`: product CRUD + image upload (max 4, 2MB each), orders history ✅
+- Admin dashboard `/tienda/admin`: product CRUD + image upload (max 4, 2MB each), orders history + delete orders ✅
 - Email dispatch to owner on order via Resend ✅
 - LocalStorage cart persistence ✅
 - Mobile responsive header + footer matching Electroyes brand ✅
+- Main site (`site-source/`) Vite build with `base: './'` for subfolder deploy ✅
+- Hero/Header/Footer logo via Vite ES module import (works on any deployed path) ✅
+- Merged deploy bundle `/app/frontend/public/electroyes-donweb.zip` (main site + `/tienda/` + `.htaccess`) ✅
 
 ## API endpoints (`/api`)
 - `POST /auth/admin/login`
 - `GET /auth/admin/me`
 - `GET/POST /products`, `GET /products/{code}`, `PUT/DELETE /products/{id}`
-- `POST /orders` (public), `GET /orders` (admin)
+- `POST /orders` (public), `GET /orders` (admin), `DELETE /orders/{id}` (admin)
 
 ## Backlog / Next
 - **P1:** Add featured/highlighted products or category tagging when catalog grows
