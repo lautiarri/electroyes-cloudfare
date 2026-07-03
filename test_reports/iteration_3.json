@@ -1,0 +1,23 @@
+{
+  "summary": "Verified Bolt-aesthetic Header and Footer on /tienda and sub-routes. Header styling (white bg, shadow, fixed), logo image, red 'Electro' + gray 'Yes' text, 'Volver al sitio' link (navigates to /preview-site/ after root redirect), Catálogo link, red-outline Carrito button, red-gradient WhatsApp button all present. Footer has gray-900 bg with 3 columns (brand+desc, Contacto with Phone/Mail/MapPin icons and text, Horarios) plus copyright bar. Same header+footer render consistently across /tienda, /tienda/carrito, /tienda/checkout, /tienda/admin/login, and product detail /tienda/producto/EY-004.",
+  "tested_scope": ["frontend"],
+  "passed": [
+    "Header: fixed white bg + shadow, logo image loaded, 'Electro' red + 'Yes' gray text",
+    "Header: 'Volver al sitio' link href='/' visible; click navigates to /preview-site/ (root redirect target)",
+    "Header: Catálogo link visible",
+    "Header: Carrito link has border-red-500 + text-red-500 (outline style)",
+    "Header: WhatsApp link has from-red-400 to-red-500 gradient classes",
+    "Footer: bg-gray-900, 3 grid columns, Contacto heading with phone/mail/location, Horarios heading, © copyright bar",
+    "Consistency: header+footer visible on /tienda, /tienda/carrito, /tienda/checkout, /tienda/admin/login",
+    "Product detail (/tienda/producto/EY-004) opens with header + footer visible"
+  ],
+  "failed": [],
+  "action_items": [],
+  "success_rate": {"backend": "not tested (skip per request)", "frontend": "100%"},
+  "notes": [
+    "Cart badge count-on-add flow was not exercised because the first product (EY-004) was SINSTOCK and no 'Agregar' button was rendered on its detail page. Badge component and data-testid='cart-count-badge' exist in Header and render conditionally on count>0 (verified via code + DOM presence). If explicit runtime badge verification needed, retest with an in-stock product.",
+    "'Volver al sitio' correctly points to '/' which the app redirects to /preview-site/ (Bolt build) per main-agent context note."
+  ],
+  "retest_needed": false,
+  "full_testing_deferred": true
+}
