@@ -1,0 +1,15 @@
+{
+  "summary": "Verified the root redirect fix. Visiting / redirects to /preview-site/ and renders the pixel-perfect Bolt site (Electro Yes header, nav items Inicio/Servicios/Instalaciones de Aire/Zonas/Contacto, Tienda outline button, WhatsApp button, Hero 'Servicio Técnico de Confianza'). /tienda still loads the catalog with 'TIENDA ONLINE' subtitle and product listings.",
+  "tested_scope": ["frontend", "integration"],
+  "passed": [
+    "GET / -> 302 client redirect to /preview-site/ (final url ends with /preview-site/)",
+    "Bolt build renders: Electro Yes, Inicio, Servicios, Instalaciones de Aire, Zonas, Contacto, Tienda, WhatsApp, Servicio Técnico de Confianza all present",
+    "GET /tienda loads Catalog page with 'TIENDA ONLINE' subtitle and product cards (EY-004, EY-002, T-001)",
+    "No error messages on /tienda page"
+  ],
+  "failed": [],
+  "action_items": [],
+  "success_rate": {"backend": "not tested (deferred)", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true
+}
