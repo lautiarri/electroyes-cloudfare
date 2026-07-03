@@ -1,0 +1,23 @@
+{
+  "summary": "Quick verification of 4 small fixes: (1) 'Catálogo' removed from /tienda header, (2) floating WhatsApp button on /tienda pages, (3) DELETE /api/orders/{id} secured with admin token and functional, (4) electroyes-logo.png accessible at /electroyes-logo.png and /preview-site/electroyes-logo.png. All checks passed.",
+  "tested_scope": ["frontend", "backend", "auth", "integration"],
+  "passed": [
+    "GET /electroyes-logo.png -> 200 (18070 bytes)",
+    "GET /preview-site/electroyes-logo.png -> 200 (18070 bytes)",
+    "POST /api/auth/admin/login (admin/electroyes2026) -> 200, returns JWT token",
+    "GET /api/orders with admin token -> 200 (5 orders)",
+    "DELETE /api/orders/{id} without token -> 401 Unauthorized",
+    "DELETE /api/orders/{missing_id} with token -> 404 'Pedido no encontrado'",
+    "DELETE /api/orders/{real_id} with token -> 200 {ok:true}; order removed (count 5 -> 4)",
+    "Frontend /tienda header text = 'Electro Yes Volver al sitio Carrito WhatsApp' (no 'Catálogo')",
+    "Floating WhatsApp button (aria-label='WhatsApp', wa.me link) rendered fixed at bottom-right (x=1285, y=688, 56x56) and visible",
+    "Header logo img loaded (naturalWidth=108) on /tienda",
+    "Preview-site hero logo img (electroyes-logo) loaded (naturalWidth=108)"
+  ],
+  "failed": [],
+  "action_items": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "retest_needed": false,
+  "full_testing_deferred": true,
+  "notes": "Login endpoint returns key 'token' (not 'access_token'). Public URL used: https://tienda-electroyes.preview.emergentagent.com (from frontend/.env)."
+}

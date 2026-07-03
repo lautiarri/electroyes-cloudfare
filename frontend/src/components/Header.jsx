@@ -20,18 +20,7 @@ export default function Header() {
           </Link>
 
           <nav className="hidden md:flex items-center space-x-6">
-            <a
-              href="/"
-              className="text-gray-700 hover:text-red-500 transition-colors font-medium inline-flex items-center gap-1.5"
-            >
-              <ArrowLeft size={16} /> Volver al sitio
-            </a>
-            <Link
-              to="/tienda"
-              className="text-gray-700 hover:text-red-500 transition-colors font-medium"
-            >
-              Catálogo
-            </Link>
+            <a href="/" className="text-gray-700 hover:text-red-500 transition-colors font-medium inline-flex items-center gap-1.5"><ArrowLeft size={16}/> Volver al sitio</a>
             <Link
               to="/tienda/carrito"
               data-testid="header-cart-link"
@@ -71,12 +60,7 @@ export default function Header() {
 
         {open && (
           <nav className="md:hidden mt-4 pb-4 flex flex-col space-y-4">
-            <a href="/" className="text-gray-700 font-medium inline-flex items-center gap-1.5">
-              <ArrowLeft size={16} /> Volver al sitio
-            </a>
-            <Link to="/tienda" onClick={() => setOpen(false)} className="text-gray-700 font-medium">
-              Catálogo
-            </Link>
+            <a href="/" className="text-gray-700 font-medium inline-flex items-center gap-1.5"><ArrowLeft size={16}/> Volver al sitio</a>
             <Link
               to="/tienda/carrito"
               onClick={() => setOpen(false)}

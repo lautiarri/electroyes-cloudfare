@@ -23,6 +23,7 @@ export const api = {
   createOrder: (payload) => client.post("/orders", payload).then((r) => r.data),
   listOrders: () => client.get("/orders").then((r) => r.data),
 
+  deleteOrder: (id) => client.delete(`/orders/${id}`).then((r) => r.data),
   // Auth
   adminLogin: (username, password) =>
     client.post("/auth/admin/login", { username, password }).then((r) => r.data),

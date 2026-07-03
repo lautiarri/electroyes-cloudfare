@@ -150,9 +150,17 @@ export default function AdminDashboard() {
                       <div className="font-semibold">{o.first_name} {o.last_name}</div>
                       <div className="text-xs text-[hsl(var(--ey-ink-soft))]">{new Date(o.created_at).toLocaleString("es-AR")}</div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-lg font-extrabold" style={{ color: "hsl(var(--ey-coral-strong))" }}>{formatPrice(o.total)}</div>
-                      <div className="text-xs">{o.email_sent ? "📧 Enviado" : "⚠️ Sin envío"}</div>
+                    <div className="text-right flex items-center gap-3">
+                      <div>
+                        <div className="text-lg font-extrabold" style={{ color: "hsl(var(--ey-coral-strong))" }}>{formatPrice(o.total)}</div>
+                        <div className="text-xs">{o.email_sent ? "📧 Enviado" : "⚠️ Sin envío"}</div>
+                      </div>
+                      <button
+                        onClick={async (e) => { e.preventDefault(); e.stopPropagation(); if(window.confirm(`¿Eliminar pedido #${o.id.slice(0,8).toUpperCase()}?`)){ try { await api.deleteOrder(o.id); toast.success("Pedido eliminado"); load(); } catch(err){ toast.error(err?.response?.data?.detail || "Error"); } } }}
+                        className="p-2 rounded-lg text-red-500 hover:bg-red-50"
+                        data-testid={`delete-order-${o.id.slice(0,8)}`}
+                        title="Eliminar pedido"
+                      ><Trash2 className="w-4 h-4"/></button>
                     </div>
                   </summary>
                   <div className="mt-4 pt-4 border-t text-sm space-y-2">

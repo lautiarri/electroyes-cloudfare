@@ -332,6 +332,15 @@ async def list_orders(_: bool = Depends(require_admin)):
     return docs
 
 
+
+
+@api_router.delete("/orders/{order_id}")
+async def delete_order(order_id: str, _: bool = Depends(require_admin)):
+    r = await db.orders.delete_one({"id": order_id})
+    if r.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Pedido no encontrado")
+    return {"ok": True}
+
 @api_router.get("/")
 async def root():
     return {"service": "electroyes-tienda", "status": "ok"}
