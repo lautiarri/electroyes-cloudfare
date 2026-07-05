@@ -28,6 +28,7 @@ Build a new e-commerce section at `/tienda` inside the existing Electroyes site 
 - Admin login `/tienda/admin/login` ✅
 - Admin dashboard `/tienda/admin`: product CRUD + image upload (max 4, 2MB each), orders history + delete orders ✅
 - Email dispatch to owner on order via Resend ✅
+- Customer receives an "¡Gracias por tu compra!" confirmation email with order summary via Resend ✅ (requires verified sender domain for non-owner recipients; falls back gracefully if sandbox)
 - LocalStorage cart persistence ✅
 - Mobile responsive header + footer matching Electroyes brand ✅
 - Main site (`site-source/`) Vite build with `base: './'` for subfolder deploy ✅
@@ -42,8 +43,7 @@ Build a new e-commerce section at `/tienda` inside the existing Electroyes site 
 
 ## Backlog / Next
 - **P1:** Add featured/highlighted products or category tagging when catalog grows
-- **P1:** Send confirmation email copy to customer (currently only owner receives it)
-- **P2:** Verify a custom sender domain in Resend for production deliverability
+- **P1:** Verify a custom sender domain in Resend so customer emails send to non-owner addresses (currently blocked by sandbox `onboarding@resend.dev`)
 - **P2:** Order status flow (pending → contacted → paid → shipped)
 - **P2:** Product image compression client-side to fit more/larger photos
 - **P2:** Analytics / most-viewed products

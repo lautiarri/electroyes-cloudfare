@@ -98,6 +98,7 @@ class Order(BaseModel):
     total: float
     created_at: str
     email_sent: bool = False
+    customer_email_sent: bool = False
 
 
 class LoginRequest(BaseModel):
@@ -277,6 +278,91 @@ async def send_order_email(order: dict) -> bool:
         return False
 
 
+def build_customer_email_html(order: dict) -> str:
+    rows = ""
+    for item in order["items"]:
+        rows += f"""
+        <tr>
+          <td style="padding:8px;border-bottom:1px solid #eee;font-family:Arial,sans-serif;font-size:13px;color:#333;">{item['code']}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;font-family:Arial,sans-serif;font-size:13px;color:#333;">{item['name']}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;font-family:Arial,sans-serif;font-size:13px;color:#333;text-align:center;">{item['quantity']}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;font-family:Arial,sans-serif;font-size:13px;color:#333;text-align:right;">${item['unit_price']:,.2f}</td>
+          <td style="padding:8px;border-bottom:1px solid #eee;font-family:Arial,sans-serif;font-size:13px;color:#333;text-align:right;"><b>${item['subtotal']:,.2f}</b></td>
+        </tr>
+        """
+    return f"""
+    <!doctype html>
+    <html><body style="margin:0;padding:0;background:#fdf6f5;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fdf6f5;padding:24px 0;">
+        <tr><td align="center">
+          <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.06);">
+            <tr><td style="background:#f5675a;padding:28px 24px;color:#fff;font-family:Arial,sans-serif;text-align:center;">
+              <div style="font-size:24px;font-weight:700;">¡Gracias por tu compra, {order['first_name']}!</div>
+              <div style="font-size:14px;opacity:0.95;margin-top:8px;">Recibimos tu pedido y ya nos estamos poniendo en contacto.</div>
+            </td></tr>
+            <tr><td style="padding:24px;font-family:Arial,sans-serif;color:#333;">
+              <p style="margin:0 0 16px 0;font-size:14px;line-height:1.6;color:#444;">
+                Nº de pedido: <b>#{order['id'][:8]}</b><br/>
+                Fecha: {order['created_at']}
+              </p>
+              <p style="margin:0 0 20px 0;font-size:14px;line-height:1.6;color:#444;">
+                A la brevedad te vamos a contactar por WhatsApp al <b>{order['phone']}</b> para coordinar la entrega y el pago.
+                Si necesitás avisarnos algo urgente, respondé a este mail o escribinos por WhatsApp.
+              </p>
+
+              <h3 style="margin:24px 0 12px 0;font-size:16px;color:#f5675a;">Detalle de tu pedido</h3>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                <thead>
+                  <tr style="background:#fdf6f5;">
+                    <th style="padding:8px;text-align:left;font-family:Arial,sans-serif;font-size:12px;color:#666;">Código</th>
+                    <th style="padding:8px;text-align:left;font-family:Arial,sans-serif;font-size:12px;color:#666;">Producto</th>
+                    <th style="padding:8px;text-align:center;font-family:Arial,sans-serif;font-size:12px;color:#666;">Cant.</th>
+                    <th style="padding:8px;text-align:right;font-family:Arial,sans-serif;font-size:12px;color:#666;">P. Unit.</th>
+                    <th style="padding:8px;text-align:right;font-family:Arial,sans-serif;font-size:12px;color:#666;">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>{rows}</tbody>
+              </table>
+
+              <div style="text-align:right;margin-top:20px;font-family:Arial,sans-serif;font-size:18px;color:#111;">
+                <b>Total: ${order['total']:,.2f}</b>
+              </div>
+
+              <div style="margin-top:28px;padding:16px;background:#fdf6f5;border-radius:8px;font-size:13px;color:#555;line-height:1.6;">
+                <b style="color:#f5675a;">¿Consultas?</b> Escribinos a <a href="mailto:info@electroyes.com.ar" style="color:#f5675a;text-decoration:none;">info@electroyes.com.ar</a> o por <a href="https://wa.me/5491151529070" style="color:#f5675a;text-decoration:none;">WhatsApp</a>.
+              </div>
+            </td></tr>
+            <tr><td style="background:#111;padding:16px;text-align:center;color:#aaa;font-family:Arial,sans-serif;font-size:12px;">
+              {STORE_NAME} · Servicio Técnico de Confianza
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </body></html>
+    """
+
+
+async def send_customer_confirmation_email(order: dict) -> bool:
+    if not RESEND_API_KEY:
+        logger.warning("Resend not configured; skipping customer email")
+        return False
+    if not order.get("email"):
+        return False
+    params = {
+        "from": f"{STORE_NAME} <{SENDER_EMAIL}>",
+        "to": [order["email"]],
+        "subject": f"Confirmación de tu pedido #{order['id'][:8]} — {STORE_NAME}",
+        "html": build_customer_email_html(order),
+    }
+    try:
+        result = await asyncio.to_thread(resend.Emails.send, params)
+        logger.info(f"Customer email sent: {result}")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send customer email: {e}")
+        return False
+
+
 @api_router.post("/orders", response_model=Order)
 async def create_order(payload: OrderCreate):
     if not payload.items:
@@ -312,6 +398,7 @@ async def create_order(payload: OrderCreate):
         "total": round(total, 2),
         "created_at": datetime.now(timezone.utc).isoformat(),
         "email_sent": False,
+        "customer_email_sent": False,
     }
 
     # Decrement stock
@@ -320,6 +407,8 @@ async def create_order(payload: OrderCreate):
 
     email_ok = await send_order_email(order_doc)
     order_doc["email_sent"] = email_ok
+    customer_email_ok = await send_customer_confirmation_email(order_doc)
+    order_doc["customer_email_sent"] = customer_email_ok
 
     await db.orders.insert_one(order_doc)
     order_doc.pop("_id", None)
