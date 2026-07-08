@@ -5,13 +5,15 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import asyncio
 import logging
+import smtplib
+import ssl
+from email.message import EmailMessage
 from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone, timedelta
 import jwt
-import resend
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -26,19 +28,56 @@ JWT_SECRET = os.environ.get('JWT_SECRET', 'change-me')
 JWT_ALGO = "HS256"
 ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin')
-RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
-SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
+# SMTP config (DonWeb / any provider)
+SMTP_HOST = os.environ.get('SMTP_HOST', '')
+SMTP_PORT = int(os.environ.get('SMTP_PORT', '465'))
+SMTP_USER = os.environ.get('SMTP_USER', '')
+SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
+SMTP_USE_SSL = os.environ.get('SMTP_USE_SSL', 'true').lower() == 'true'
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL', SMTP_USER)
 ORDER_RECIPIENT_EMAIL = os.environ.get('ORDER_RECIPIENT_EMAIL', '')
 STORE_NAME = os.environ.get('STORE_NAME', 'Electroyes')
-
-if RESEND_API_KEY:
-    resend.api_key = RESEND_API_KEY
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+
+def _smtp_send(to_email: str, subject: str, html: str) -> None:
+    """Blocking SMTP send. Wrap with asyncio.to_thread from async code."""
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = f"{STORE_NAME} <{SENDER_EMAIL}>"
+    msg["To"] = to_email
+    msg.set_content("Este mail requiere un cliente compatible con HTML.")
+    msg.add_alternative(html, subtype="html")
+    context = ssl.create_default_context()
+    if SMTP_USE_SSL:
+        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context, timeout=30) as s:
+            s.login(SMTP_USER, SMTP_PASSWORD)
+            s.send_message(msg)
+    else:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=30) as s:
+            s.starttls(context=context)
+            s.login(SMTP_USER, SMTP_PASSWORD)
+            s.send_message(msg)
+
+
+async def send_smtp_email(to_email: str, subject: str, html: str) -> bool:
+    if not (SMTP_HOST and SMTP_USER and SMTP_PASSWORD):
+        logger.warning("SMTP not configured; skipping email to %s", to_email)
+        return False
+    if not to_email:
+        return False
+    try:
+        await asyncio.to_thread(_smtp_send, to_email, subject, html)
+        logger.info("SMTP email sent to %s", to_email)
+        return True
+    except Exception as e:
+        logger.error("SMTP send failed to %s: %s", to_email, e)
+        return False
 
 
 # ============ Models ============
@@ -260,22 +299,14 @@ def build_email_html(order: dict) -> str:
 
 
 async def send_order_email(order: dict) -> bool:
-    if not RESEND_API_KEY or not ORDER_RECIPIENT_EMAIL:
-        logger.warning("Resend not configured; skipping email")
+    if not ORDER_RECIPIENT_EMAIL:
+        logger.warning("ORDER_RECIPIENT_EMAIL not configured; skipping owner email")
         return False
-    params = {
-        "from": f"{STORE_NAME} <{SENDER_EMAIL}>",
-        "to": [ORDER_RECIPIENT_EMAIL],
-        "subject": f"Nuevo pedido #{order['id'][:8]} — {order['first_name']} {order['last_name']}",
-        "html": build_email_html(order),
-    }
-    try:
-        result = await asyncio.to_thread(resend.Emails.send, params)
-        logger.info(f"Email sent: {result}")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to send email: {e}")
-        return False
+    return await send_smtp_email(
+        to_email=ORDER_RECIPIENT_EMAIL,
+        subject=f"Nuevo pedido #{order['id'][:8]} — {order['first_name']} {order['last_name']}",
+        html=build_email_html(order),
+    )
 
 
 def build_customer_email_html(order: dict) -> str:
@@ -343,24 +374,13 @@ def build_customer_email_html(order: dict) -> str:
 
 
 async def send_customer_confirmation_email(order: dict) -> bool:
-    if not RESEND_API_KEY:
-        logger.warning("Resend not configured; skipping customer email")
-        return False
     if not order.get("email"):
         return False
-    params = {
-        "from": f"{STORE_NAME} <{SENDER_EMAIL}>",
-        "to": [order["email"]],
-        "subject": f"Confirmación de tu pedido #{order['id'][:8]} — {STORE_NAME}",
-        "html": build_customer_email_html(order),
-    }
-    try:
-        result = await asyncio.to_thread(resend.Emails.send, params)
-        logger.info(f"Customer email sent: {result}")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to send customer email: {e}")
-        return False
+    return await send_smtp_email(
+        to_email=order["email"],
+        subject=f"Confirmación de tu pedido #{order['id'][:8]} — {STORE_NAME}",
+        html=build_customer_email_html(order),
+    )
 
 
 @api_router.post("/orders", response_model=Order)

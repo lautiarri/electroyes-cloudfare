@@ -3,7 +3,7 @@ import { Phone, Mail, MapPin } from "lucide-react";
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   return (
-    <footer className="bg-gray-900 text-white py-12">
+    <footer className="bg-gray-900 text-white py-12" data-testid="site-footer">
       <div className="max-w-6xl mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           <div>
@@ -42,8 +42,37 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
+        <div className="border-t border-gray-800 pt-8 text-center text-gray-400 space-y-3">
           <p>&copy; {currentYear} Electro Yes. Todos los derechos reservados.</p>
+          <p className="text-xs text-gray-500">
+            <span className="opacity-70">Sitio desarrollado por</span>{" "}
+            <a
+              href="https://www.arsolutions.com.ar/"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="footer-arsolutions-link"
+              className="inline-flex items-center gap-1 text-red-400 hover:text-red-300 transition-colors font-semibold tracking-wide group"
+            >
+              <span className="border-b border-transparent group-hover:border-red-300 transition-colors">
+                ARSolutions
+              </span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"
+              >
+                <path d="M7 17L17 7" />
+                <path d="M7 7h10v10" />
+              </svg>
+            </a>
+          </p>
         </div>
       </div>
     </footer>
