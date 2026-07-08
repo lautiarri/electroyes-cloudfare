@@ -5,8 +5,13 @@
 - Username: `admin`
 - Password: `electroyes2026`
 
-## Order Recipient Email (Resend)
-- `lautaro.arrietamaj@gmail.com`
+## SMTP (DonWeb — sends order emails)
+- Host: `a0100302.ferozo.com`
+- Port: `465` (SSL)
+- User: `electroyes@arsolutions.com.ar`
+- Password: `A9/vMk2Nq7@yLz3`
+- Sender & owner recipient: `electroyes@arsolutions.com.ar`
 
 ## Notes
-- Resend in test mode: emails only deliver to the verified account owner's address.
+- Migrated from Resend to native SMTP via smtplib (no external service).
+- SMTP credentials live in backend `.env` locally and must be set in Render env vars for production.
