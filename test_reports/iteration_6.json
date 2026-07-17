@@ -1,0 +1,49 @@
+{
+  "summary": "Verified critical fix: CRA bundle now points to production Render backend and admin login works end-to-end. Static bundle inspection + live Playwright login flow both confirm zero references to Emergent preview URL.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "verification_details": {
+    "static_bundle_check": {
+      "local_server_bundle": "http://localhost:8892/tienda/static/js/main.fc546c05.js -> only https://electroyes-api.onrender.com (no emergentagent.com, no preview URL)",
+      "zip_bundle": "/app/frontend/public/electroyes-donweb.zip -> tienda/static/js/main.fc546c05.js contains only https://electroyes-api.onrender.com",
+      "cra_build": "/app/frontend/build/static/js/main.fc546c05.js -> only https://electroyes-api.onrender.com",
+      "other_urls_found": ["https://react.dev", "https://reactrouter.com", "https://wa.me", "https://www.arsolutions.com.ar"],
+      "emergent_urls_found": 0
+    },
+    "live_login_flow": {
+      "tienda_home_loads": true,
+      "title": "Electro Yes - Tienda Online",
+      "navigation_via_history_pushState_works": true,
+      "login_form_rendered": true,
+      "data_testids_present": ["admin-username", "admin-password", "admin-login-btn"],
+      "login_post_request": "POST https://electroyes-api.onrender.com/api/auth/admin/login -> 200 OK",
+      "products_fetched": "GET https://electroyes-api.onrender.com/api/products -> 200 OK",
+      "orders_fetched": "GET https://electroyes-api.onrender.com/api/orders -> 200 OK",
+      "post_login_url": "http://localhost:8892/tienda/admin",
+      "dashboard_indicators": {
+        "productos_tab": true,
+        "pedidos_tab": true,
+        "nuevo_producto_button": true,
+        "cerrar_sesion_button": true,
+        "error_message": false
+      },
+      "emergent_calls_during_test": 0,
+      "onrender_calls_during_test": 8
+    }
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (skipped per request)", "frontend": "100%"},
+  "test_credentials": "admin / electroyes2026 (as provided; validated live against Render)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Fix for hardcoded REACT_APP_BACKEND_URL is fully verified. Bundle main.fc546c05.js everywhere (local /tmp/dwv6, CRA build, ZIP) references only https://electroyes-api.onrender.com. Live login with admin/electroyes2026 succeeds, dashboard renders with Productos/Pedidos tabs, no emergentagent.com traffic. ZIP is ready to deploy to DonWeb.",
+  "rca of the issue": "Original bug: previous CRA build embedded the Emergent preview URL as REACT_APP_BACKEND_URL at compile time, so once deployed to DonWeb the compiled JS fetched auth from the preview backend (different DB) instead of Render. Fix: rebuilt CRA with REACT_APP_BACKEND_URL=https://electroyes-api.onrender.com and regenerated the ZIP. Verified by grep of the bundle and by live network capture during login."
+}
