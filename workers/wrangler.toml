@@ -1,0 +1,29 @@
+name = "electroyes-api"
+main = "src/index.ts"
+compatibility_date = "2025-01-15"
+compatibility_flags = ["nodejs_compat"]
+
+# --- D1 (SQLite) database ---
+# After creating with `wrangler d1 create electroyes-db`, paste the database_id below.
+[[d1_databases]]
+binding = "DB"
+database_name = "electroyes-db"
+database_id = "REPLACE_WITH_D1_ID_AFTER_CREATE"
+
+# --- R2 bucket for product images ---
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "electroyes-images"
+
+# --- Public env vars (non-secret) ---
+[vars]
+ADMIN_USERNAME = "admin"
+STORE_NAME = "Electroyes"
+SENDER_EMAIL = "onboarding@resend.dev"
+ORDER_RECIPIENT_EMAIL = "electroyes@arsolutions.com.ar"
+CORS_ORIGIN = "*"
+
+# --- Secrets (set with: wrangler secret put NAME) ---
+# JWT_SECRET
+# ADMIN_PASSWORD
+# RESEND_API_KEY

@@ -1,49 +1,68 @@
-# PRD — Electroyes Tienda Online (`/tienda`)
+# PRD — Electroyes Tienda Online (Cloudflare Full Stack)
 
 ## Original problem
-Build a new e-commerce section at `/tienda` inside the existing Electroyes site (https://electroyes.com.ar). It must keep the visual identity of the main site (coral logo, hex badge, light background), sell products with fast stock rotation, no login/checkout registration for buyers, and provide an admin panel for the owner.
+E-commerce section for `electroyes.com.ar` at `/tienda`. No customer login/registration. Product grid, detail, cart, checkout that emails owner + customer and redirects to WhatsApp. Protected admin panel for products and orders. Originally deployed on DonWeb + Render + MongoDB Atlas + Resend + GitHub.
+
+## Migration (Feb 2026)
+User requested consolidation to a single free provider. Chose full **Cloudflare** migration:
+- **DonWeb** → **Cloudflare Pages** (frontend hosting).
+- **Render (FastAPI)** → **Cloudflare Workers (Hono/TS)** (backend).
+- **MongoDB Atlas** → **Cloudflare D1** (SQLite).
+- **Base64 images in DB** → **Cloudflare R2** (object storage).
+- **DonWeb SMTP** → **Resend** (HTTP API from Worker, no SMTP).
+- GitHub kept (needed for Pages/Workers Git integration).
 
 ## Users
-- **Customer (public):** browses catalog, adds to cart (localStorage), checkouts with name/lastname/phone/email, gets email confirmation to store owner.
-- **Admin (owner):** logs in with user/pass, manages products (CRUD with 1–4 base64 images) and views order history.
+- **Customer (public):** browses catalog, adds to cart (localStorage), checkouts with name/lastname/phone/email, gets email confirmation.
+- **Admin:** logs in with user/pass, manages products (CRUD with 1–4 images uploaded to R2) and views/deletes orders.
 
 ## Architecture
-- **Backend:** FastAPI + Motor/MongoDB. JWT auth for admin. Resend for transactional emails.
-- **Frontend:** React 19 + React Router 7 + Tailwind + shadcn tokens + Sonner toasts. CartContext with localStorage persistence.
-- **Storage:** Product images as base64 data URLs in MongoDB (per user choice).
 
-## Environment vars (backend/.env)
-- `RESEND_API_KEY` — Resend key (provided by user)
-- `SENDER_EMAIL` — `onboarding@resend.dev` (Resend sandbox)
-- `ORDER_RECIPIENT_EMAIL` — `lautaro.arrietamaj@gmail.com`
-- `ADMIN_USERNAME` / `ADMIN_PASSWORD` — `admin` / `electroyes2026`
-- `JWT_SECRET`
+```
+Cloudflare Pages (frontend/)  ────►  Cloudflare Worker (workers/)
+                                     ├─ D1 (products, orders)
+                                     ├─ R2 (product images)
+                                     └─ Resend HTTP (emails)
+```
 
-## Implemented (Feb 2026)
-- Catalog `/tienda` (grid + optional search) ✅
-- Product detail `/tienda/producto/:code` (image gallery with thumbnails + arrows, qty selector, stock badge) ✅
-- Cart `/tienda/carrito` (edit qty, remove, subtotal + total) ✅
-- Checkout `/tienda/checkout` (name/lastname/phone/email) ✅
-- Order confirmation `/tienda/confirmacion/:id` ✅
-- Admin login `/tienda/admin/login` ✅
-- Admin dashboard `/tienda/admin`: product CRUD + image upload (max 4, 2MB each), orders history + delete orders ✅
-- Email dispatch to owner on order via Resend ✅
-- Customer receives an "¡Gracias por tu compra!" confirmation email with order summary via Resend ✅ (requires verified sender domain for non-owner recipients; falls back gracefully if sandbox)
-- LocalStorage cart persistence ✅
-- Mobile responsive header + footer matching Electroyes brand ✅
-- Main site (`site-source/`) Vite build with `base: './'` for subfolder deploy ✅
-- Hero/Header/Footer logo via Vite ES module import (works on any deployed path) ✅
-- Merged deploy bundle `/app/frontend/public/electroyes-donweb.zip` (main site + `/tienda/` + `.htaccess`) ✅
+## Repo layout
 
-## API endpoints (`/api`)
-- `POST /auth/admin/login`
-- `GET /auth/admin/me`
-- `GET/POST /products`, `GET /products/{code}`, `PUT/DELETE /products/{id}`
-- `POST /orders` (public), `GET /orders` (admin), `DELETE /orders/{id}` (admin)
+- `frontend/` — React 19 CRA. Contains the pre-built Vite site under `public/preview-site/` served at `/preview-site/`.
+- `workers/` — Cloudflare Workers backend (Hono + D1 + R2 + Resend).
+- `site/` — original Vite build source of the pixel-perfect main site (already compiled into `frontend/public/preview-site/`).
+- `README.md` / `DEPLOY.md` — deploy instructions.
+- `.gitignore` — excludes `backend/`, `memory/`, `tests/`, `test_reports/` from public repo.
+
+## API endpoints (Worker, prefix `/api`)
+- `GET /` — health
+- `POST /auth/admin/login`, `GET /auth/admin/me`
+- `GET /products`, `GET /products/:code`
+- `POST /products`, `PUT /products/:id`, `DELETE /products/:id` (admin)
+- `POST /orders` (public), `GET /orders`, `DELETE /orders/:id` (admin)
+- `POST /upload` (admin) — multipart/form-data image upload to R2
+- `GET /images/:key` — serves image from R2 with immutable cache
+
+## Env / bindings (Worker)
+- Bindings: `DB` (D1), `IMAGES` (R2).
+- Vars: `ADMIN_USERNAME`, `STORE_NAME`, `SENDER_EMAIL`, `ORDER_RECIPIENT_EMAIL`, `CORS_ORIGIN`.
+- Secrets: `JWT_SECRET`, `ADMIN_PASSWORD`, `RESEND_API_KEY`.
+
+## Frontend env
+- `REACT_APP_BACKEND_URL` → set in Cloudflare Pages env to the Worker URL.
+
+## Status (Feb 2026)
+- ✅ Cloudflare Workers backend fully written and TypeScript-clean (`npx tsc --noEmit` passes, `wrangler dry-run` OK).
+- ✅ D1 schema (products, orders) ready.
+- ✅ R2 upload + serve endpoints implemented.
+- ✅ Resend HTTP API integration.
+- ✅ Frontend `AdminDashboard` updated: images now upload to R2 (URL stored) instead of base64.
+- ✅ Frontend build passes cleanly.
+- ✅ `_redirects` file for Cloudflare Pages SPA routing.
+- ✅ Deploy guide (`DEPLOY.md`) with step-by-step for GitHub → Cloudflare Pages/Workers.
 
 ## Backlog / Next
-- **P1:** Add featured/highlighted products or category tagging when catalog grows
-- **P1:** Verify a custom sender domain in Resend so customer emails send to non-owner addresses (currently blocked by sandbox `onboarding@resend.dev`)
-- **P2:** Order status flow (pending → contacted → paid → shipped)
-- **P2:** Product image compression client-side to fit more/larger photos
-- **P2:** Analytics / most-viewed products
+- **P0:** User creates empty GitHub repo → pushes via Emergent "Save to Github" → connects to Cloudflare Pages + Workers per `DEPLOY.md`.
+- **P1:** Verify `electroyes.com.ar` in Resend to send from `ventas@electroyes.com.ar` (DNS records needed).
+- **P1:** Optionally connect custom domain `electroyes.com.ar` to Cloudflare Pages.
+- **P2:** Featured products section on main site homepage.
+- **P2:** Order status flow (pending → contacted → paid → shipped).

@@ -1,0 +1,6 @@
+# Cloudflare Pages routing
+# - Serve static files first (React build assets, /preview-site/*, images).
+# - For any other path fall back to index.html so React Router handles it.
+/tienda/*        /index.html   200
+/tienda          /index.html   200
+/*               /index.html   200

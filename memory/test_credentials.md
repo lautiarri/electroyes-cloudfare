@@ -1,17 +1,14 @@
 # Test Credentials
 
 ## Admin Panel (Electroyes Tienda)
-- URL: /tienda/admin/login
+- URL: `/tienda/admin/login`
 - Username: `admin`
-- Password: `electroyes2026`
+- Password: `electroyes2026` *(configured as `ADMIN_PASSWORD` secret in Cloudflare Worker)*
 
-## SMTP (DonWeb — sends order emails)
-- Host: `a0100302.ferozo.com`
-- Port: `465` (SSL)
-- User: `electroyes@arsolutions.com.ar`
-- Password: `A9/vMk2Nq7@yLz3`
-- Sender & owner recipient: `electroyes@arsolutions.com.ar`
+## Resend (email)
+- API Key stored as `RESEND_API_KEY` secret in Cloudflare Worker.
+- Sender: `onboarding@resend.dev` (fallback until `electroyes.com.ar` verified in Resend).
 
 ## Notes
-- Migrated from Resend to native SMTP via smtplib (no external service).
-- SMTP credentials live in backend `.env` locally and must be set in Render env vars for production.
+- Backend migrated Feb 2026 from FastAPI/Render/Mongo/SMTP → Cloudflare Workers + D1 + R2 + Resend HTTP API.
+- Old MongoDB/SMTP credentials no longer used.

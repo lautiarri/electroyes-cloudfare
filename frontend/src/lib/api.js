@@ -28,6 +28,15 @@ export const api = {
   adminLogin: (username, password) =>
     client.post("/auth/admin/login", { username, password }).then((r) => r.data),
   adminMe: () => client.get("/auth/admin/me").then((r) => r.data),
+
+  // Uploads (R2)
+  uploadImage: (file) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    return client
+      .post("/upload", fd, { headers: { "Content-Type": "multipart/form-data" } })
+      .then((r) => r.data);
+  },
 };
 
 export default api;

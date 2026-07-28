@@ -210,29 +210,34 @@ function ProductForm({ initial, onClose, onSaved }) {
 
   const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
+  const [uploading, setUploading] = useState(false);
   const onFiles = async (e) => {
     const files = Array.from(e.target.files || []);
     if (form.images.length + files.length > 4) {
       toast.error("Máximo 4 imágenes por producto");
       return;
     }
-    const readers = files.map(
-      (f) =>
-        new Promise((resolve, reject) => {
-          if (f.size > 2 * 1024 * 1024) return reject(new Error("Imagen > 2MB"));
-          const r = new FileReader();
-          r.onload = () => resolve(r.result);
-          r.onerror = reject;
-          r.readAsDataURL(f);
-        })
-    );
-    try {
-      const b64 = await Promise.all(readers);
-      setForm((f) => ({ ...f, images: [...f.images, ...b64] }));
-    } catch (err) {
-      toast.error(err.message || "Error al leer imagen");
+    for (const f of files) {
+      if (f.size > 2 * 1024 * 1024) {
+        toast.error(`"${f.name}" supera 2MB`);
+        e.target.value = "";
+        return;
+      }
     }
-    e.target.value = "";
+    setUploading(true);
+    try {
+      const urls = [];
+      for (const f of files) {
+        const { url } = await api.uploadImage(f);
+        urls.push(url);
+      }
+      setForm((f) => ({ ...f, images: [...f.images, ...urls] }));
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || "Error al subir imagen");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
   };
 
   const removeImg = (idx) => setForm((f) => ({ ...f, images: f.images.filter((_, i) => i !== idx) }));
@@ -299,8 +304,8 @@ function ProductForm({ initial, onClose, onSaved }) {
               ))}
               {form.images.length < 4 && (
                 <label className="aspect-square rounded-lg border-2 border-dashed border-[hsl(var(--border))] flex items-center justify-center cursor-pointer hover:border-[hsl(var(--ey-coral))] transition-colors">
-                  <Upload className="w-5 h-5 text-neutral-400" />
-                  <input type="file" accept="image/*" multiple onChange={onFiles} className="hidden" data-testid="pf-upload-input" />
+                  {uploading ? <span className="text-xs text-neutral-500">Subiendo...</span> : <Upload className="w-5 h-5 text-neutral-400" />}
+                  <input type="file" accept="image/*" multiple onChange={onFiles} disabled={uploading} className="hidden" data-testid="pf-upload-input" />
                 </label>
               )}
             </div>
