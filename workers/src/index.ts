@@ -78,7 +78,10 @@ function orderRowToJson(row: any) {
 }
 
 // ============ Health ============
-app.get('/api/', (c) => c.json({ service: 'electroyes-tienda', status: 'ok' }));
+const health = { service: 'electroyes-tienda', status: 'ok' };
+app.get('/', (c) => c.json(health));
+app.get('/api', (c) => c.json(health));
+app.get('/api/', (c) => c.json(health));
 
 // ============ Auth ============
 app.post('/api/auth/admin/login', async (c) => {
