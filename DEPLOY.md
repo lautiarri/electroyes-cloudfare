@@ -41,10 +41,10 @@ Antes de empezar tené a mano:
 1. Cloudflare Dashboard → **Workers & Pages** → **Create** → **Workers** → **Deploy from Git**.
 2. Conectá tu cuenta de GitHub y elegí el repositorio del proyecto.
 3. Configuración:
-   - **Project name:** `electroyes-api`
+   - **Project name:** `electroyes-cloudfare`
    - **Production branch:** `main`
    - **Root directory:** `workers`
-   - **Build command:** *(dejar vacío)*
+   - **Build command:** `npm install`  *(⚠️ importante para evitar que Cloudflare autodetecte yarn del frontend)*
    - **Deploy command:** `npx wrangler deploy`
 4. Antes de dar **Save and Deploy**, agregá las variables (más abajo).
 
@@ -73,11 +73,11 @@ En **Bindings**:
 También editá **`workers/wrangler.toml`** en el repo y reemplazá `REPLACE_WITH_D1_ID_AFTER_CREATE` por el Database ID copiado en el paso 1. Hacé commit y push.
 
 4. **Save and Deploy**. Cloudflare va a construir y desplegar el Worker.
-5. Al terminar te da una URL tipo `https://electroyes-api.tu-usuario.workers.dev`. **Copiala**, la necesitás para el frontend.
+5. Al terminar te da una URL tipo `https://electroyes-cloudfare.tu-usuario.workers.dev`. **Copiala**, la necesitás para el frontend.
 
 ### Verificar que el Worker anda
 
-Abrí `https://electroyes-api.tu-usuario.workers.dev/api/` en el navegador. Deberías ver:
+Abrí `https://electroyes-cloudfare.tu-usuario.workers.dev/api/` en el navegador. Deberías ver:
 ```json
 {"service":"electroyes-tienda","status":"ok"}
 ```
@@ -96,7 +96,7 @@ Abrí `https://electroyes-api.tu-usuario.workers.dev/api/` en el navegador. Debe
    - **Build output directory:** `build`
    - **Root directory:** `frontend`
 4. **Environment variables (Production)**:
-   - `REACT_APP_BACKEND_URL` → la URL del Worker del paso 3 *(ej. `https://electroyes-api.tu-usuario.workers.dev`)*
+   - `REACT_APP_BACKEND_URL` → la URL del Worker del paso 3 *(ej. `https://electroyes-cloudfare.tu-usuario.workers.dev`)*
 5. **Save and Deploy**. Espera 1-2 minutos.
 6. Cuando termine, obtenés una URL tipo `https://electroyes.pages.dev`.
 
@@ -153,13 +153,13 @@ Con un tráfico normal de tienda chica: **$0 / mes**.
 ## FAQ
 
 **¿Cómo cambio la contraseña de admin?**
-Cloudflare Dashboard → Workers → `electroyes-api` → **Settings → Variables and Secrets** → editá `ADMIN_PASSWORD` → Save. Redeploy.
+Cloudflare Dashboard → Workers → `electroyes-cloudfare` → **Settings → Variables and Secrets** → editá `ADMIN_PASSWORD` → Save. Redeploy.
 
 **¿Cómo cambio el destinatario de emails?**
 Igual que arriba pero con `ORDER_RECIPIENT_EMAIL`.
 
 **¿Cómo veo los logs de errores?**
-Workers → `electroyes-api` → **Logs → Real-time logs**.
+Workers → `electroyes-cloudfare` → **Logs → Real-time logs**.
 
 **Se rompió un deploy, ¿cómo vuelvo atrás?**
 Pages/Workers → tu proyecto → **Deployments** → elegí un deploy anterior → **Rollback to this deployment**.
