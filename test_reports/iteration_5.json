@@ -21,7 +21,7 @@
   "should_main_agent_self_test": false,
   "context_for_next_testing_agent": "Preview URL redirects / -> /preview-site/. Hero logo <img alt='Electro Yes Logo'> lives inside #inicio and renders correctly. The header structure has main-menu items as <button> elements (smooth-scroll) and 'Tienda'+'WhatsApp' as <a> inside a right-side <nav>. document.getElementById('ey-tienda-btn') is null. Footer ARSolutions link href=https://www.arsolutions.com.ar/ target=_blank rel=noopener noreferrer.",
   "test_evidence": {
-    "redirect": "https://ecommerce-preview-35.preview.emergentagent.com/ -> https://ecommerce-preview-35.preview.emergentagent.com/preview-site/",
+    "redirect": "https://store-deploy-15.preview.emergentagent.com/ -> https://store-deploy-15.preview.emergentagent.com/preview-site/",
     "hero_logo": {"naturalWidth": 439, "naturalHeight": 500, "display_size": "320x320", "visible": true, "src_contains": "electroyes-logo-B8kZaaeI.png"},
     "tienda_link": {"in_header_nav": true, "tag": "a", "href": "./tienda/", "classes": "text-gray-700 hover:text-red-500 transition-colors font-medium", "floating_btn_exists": false, "ey_tienda_btn": null},
     "footer_ars": {"has_sitio_desarrollado_text": true, "href": "https://www.arsolutions.com.ar/", "target": "_blank", "rel": "noopener noreferrer"},
