@@ -16,5 +16,6 @@
     "@cloudflare/workers-types": "^4.20250109.0",
     "typescript": "^5.7.2",
     "wrangler": "^3.99.0"
-  }
+  },
+  "packageManager": "npm@10.8.2"
 }

@@ -8,7 +8,7 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "electroyes-db"
-database_id = "REPLACE_WITH_D1_ID_AFTER_CREATE"
+database_id = "767328d2-4750-48de-a55c-e4d7e27e41a3"
 
 # --- R2 bucket for product images ---
 [[r2_buckets]]
