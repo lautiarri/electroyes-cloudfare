@@ -92,7 +92,7 @@ Abrí `https://electroyes-cloudfare.tu-usuario.workers.dev/api/` en el navegador
    - **Project name:** `electroyes` (esto define el subdominio `electroyes.pages.dev`)
    - **Production branch:** `main`
    - **Framework preset:** `Create React App`
-   - **Build command:** `yarn install --frozen-lockfile && yarn build`
+   - **Build command:** `yarn install && yarn build`
    - **Build output directory:** `build`
    - **Root directory:** `frontend`
 4. **Environment variables (Production)**:
