@@ -19,8 +19,8 @@ bucket_name = "electroyes-images"
 [vars]
 ADMIN_USERNAME = "admin"
 STORE_NAME = "Electroyes"
-SENDER_EMAIL = "onboarding@resend.dev"
-ORDER_RECIPIENT_EMAIL = "electroyes@arsolutions.com.ar"
+SENDER_EMAIL = "ventas@electroyes.com.ar"
+ORDER_RECIPIENT_EMAIL = "ventas@electroyes.com.ar"
 CORS_ORIGIN = "*"
 
 # --- Secrets (set with: wrangler secret put NAME) ---
