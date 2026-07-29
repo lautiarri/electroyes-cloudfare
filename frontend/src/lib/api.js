@@ -33,9 +33,7 @@ export const api = {
   uploadImage: (file) => {
     const fd = new FormData();
     fd.append("file", file);
-    return client
-      .post("/upload", fd, { headers: { "Content-Type": "multipart/form-data" } })
-      .then((r) => r.data);
+    return client.post("/upload", fd).then((r) => r.data);
   },
 };
 
