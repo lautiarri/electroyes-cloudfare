@@ -20,7 +20,7 @@ export default function Header() {
           </Link>
 
           <nav className="hidden md:flex items-center space-x-6">
-            <a href="/" className="text-gray-700 hover:text-red-500 transition-colors font-medium inline-flex items-center gap-1.5"><ArrowLeft size={16}/> Volver al sitio</a>
+            <a href="https://electroyes.com.ar" className="text-gray-700 hover:text-red-500 transition-colors font-medium inline-flex items-center gap-1.5"><ArrowLeft size={16}/> Volver al sitio</a>
             <Link
               to="/tienda/carrito"
               data-testid="header-cart-link"
