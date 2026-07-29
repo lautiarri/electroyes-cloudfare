@@ -21,7 +21,7 @@ ADMIN_USERNAME = "admin"
 STORE_NAME = "Electroyes"
 SENDER_EMAIL = "ventas@electroyes.com.ar"
 ORDER_RECIPIENT_EMAIL = "ventas@electroyes.com.ar"
-CORS_ORIGIN = "*"
+CORS_ORIGIN = "https://tienda.electroyes.com.ar"
 
 # --- Secrets (set with: wrangler secret put NAME) ---
 # JWT_SECRET
