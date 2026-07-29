@@ -26,7 +26,8 @@ CREATE TABLE orders (
   total REAL NOT NULL,
   created_at TEXT NOT NULL,
   email_sent INTEGER NOT NULL DEFAULT 0,
-  customer_email_sent INTEGER NOT NULL DEFAULT 0
+  customer_email_sent INTEGER NOT NULL DEFAULT 0,
+  channel TEXT NOT NULL DEFAULT 'mail'    -- 'mail' | 'whatsapp'
 );
 
 CREATE INDEX idx_orders_created ON orders(created_at DESC);

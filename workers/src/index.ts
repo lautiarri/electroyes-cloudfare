@@ -74,6 +74,7 @@ function orderRowToJson(row: any) {
     created_at: row.created_at,
     email_sent: !!row.email_sent,
     customer_email_sent: !!row.customer_email_sent,
+    channel: row.channel || 'mail',
   };
 }
 
@@ -230,9 +231,12 @@ type OrderItemIn = { product_id: string; code: string; name: string; quantity: n
 app.post('/api/orders', async (c) => {
   const body = await c.req.json<any>();
   const items: OrderItemIn[] = Array.isArray(body.items) ? body.items : [];
+  const channel: 'mail' | 'whatsapp' = body.channel === 'whatsapp' ? 'whatsapp' : 'mail';
   if (!items.length) return c.json({ detail: 'El pedido no tiene productos' }, 400);
-  if (!body.first_name || !body.last_name || !body.phone || !body.email) {
-    return c.json({ detail: 'Faltan datos del cliente' }, 400);
+  if (channel === 'mail') {
+    if (!body.first_name || !body.last_name || !body.phone || !body.email) {
+      return c.json({ detail: 'Faltan datos del cliente' }, 400);
+    }
   }
 
   const validated: OrderItemIn[] = [];
@@ -256,13 +260,14 @@ app.post('/api/orders', async (c) => {
 
   const order = {
     id: uuid(),
-    first_name: String(body.first_name).trim(),
-    last_name: String(body.last_name).trim(),
-    phone: String(body.phone).trim(),
-    email: String(body.email).trim(),
+    first_name: String(body.first_name || (channel === 'whatsapp' ? 'Pedido por WhatsApp' : '')).trim(),
+    last_name: String(body.last_name || (channel === 'whatsapp' ? '—' : '')).trim(),
+    phone: String(body.phone || (channel === 'whatsapp' ? '(por WhatsApp)' : '')).trim(),
+    email: String(body.email || '').trim(),
     items: validated,
     total,
     created_at: nowIso(),
+    channel,
   };
 
   // Decrement stock
@@ -270,11 +275,15 @@ app.post('/api/orders', async (c) => {
     await c.env.DB.prepare('UPDATE products SET stock = stock - ? WHERE id = ?').bind(it.quantity, it.product_id).run();
   }
 
-  const emailOk = await sendOrderEmail(c.env, order);
-  const customerOk = await sendCustomerConfirmation(c.env, order);
+  let ownerRes: { ok: boolean; error?: string } = { ok: false, error: 'skipped' };
+  let customerRes: { ok: boolean; error?: string } = { ok: false, error: 'skipped' };
+  if (channel === 'mail') {
+    ownerRes = await sendOrderEmail(c.env, order);
+    customerRes = await sendCustomerConfirmation(c.env, order);
+  }
 
   await c.env.DB.prepare(
-    'INSERT INTO orders (id, first_name, last_name, phone, email, items, total, created_at, email_sent, customer_email_sent) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO orders (id, first_name, last_name, phone, email, items, total, created_at, email_sent, customer_email_sent, channel) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
   )
     .bind(
       order.id,
@@ -285,12 +294,19 @@ app.post('/api/orders', async (c) => {
       JSON.stringify(order.items),
       order.total,
       order.created_at,
-      emailOk ? 1 : 0,
-      customerOk ? 1 : 0
+      ownerRes.ok ? 1 : 0,
+      customerRes.ok ? 1 : 0,
+      order.channel
     )
     .run();
 
-  return c.json({ ...order, email_sent: emailOk, customer_email_sent: customerOk });
+  return c.json({
+    ...order,
+    email_sent: ownerRes.ok,
+    customer_email_sent: customerRes.ok,
+    email_error: ownerRes.error,
+    customer_email_error: customerRes.error,
+  });
 });
 
 app.get('/api/orders', async (c) => {
@@ -409,9 +425,9 @@ function buildCustomerEmailHtml(env: Bindings, order: any): string {
 </body></html>`;
 }
 
-async function resendSend(env: Bindings, to: string, subject: string, html: string): Promise<boolean> {
-  if (!env.RESEND_API_KEY) return false;
-  if (!to) return false;
+async function resendSend(env: Bindings, to: string, subject: string, html: string): Promise<{ ok: boolean; error?: string }> {
+  if (!env.RESEND_API_KEY) return { ok: false, error: 'RESEND_API_KEY not configured' };
+  if (!to) return { ok: false, error: 'no recipient' };
   try {
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -427,18 +443,19 @@ async function resendSend(env: Bindings, to: string, subject: string, html: stri
       }),
     });
     if (!r.ok) {
-      console.error('Resend failed', r.status, await r.text());
-      return false;
+      const txt = await r.text();
+      console.error('Resend failed', r.status, txt);
+      return { ok: false, error: `HTTP ${r.status}: ${txt.slice(0, 300)}` };
     }
-    return true;
-  } catch (e) {
+    return { ok: true };
+  } catch (e: any) {
     console.error('Resend error', e);
-    return false;
+    return { ok: false, error: String(e?.message || e).slice(0, 300) };
   }
 }
 
-async function sendOrderEmail(env: Bindings, order: any): Promise<boolean> {
-  if (!env.ORDER_RECIPIENT_EMAIL) return false;
+async function sendOrderEmail(env: Bindings, order: any): Promise<{ ok: boolean; error?: string }> {
+  if (!env.ORDER_RECIPIENT_EMAIL) return { ok: false, error: 'ORDER_RECIPIENT_EMAIL not set' };
   return resendSend(
     env,
     env.ORDER_RECIPIENT_EMAIL,
@@ -447,8 +464,8 @@ async function sendOrderEmail(env: Bindings, order: any): Promise<boolean> {
   );
 }
 
-async function sendCustomerConfirmation(env: Bindings, order: any): Promise<boolean> {
-  if (!order.email) return false;
+async function sendCustomerConfirmation(env: Bindings, order: any): Promise<{ ok: boolean; error?: string }> {
+  if (!order.email) return { ok: false, error: 'customer email empty' };
   return resendSend(
     env,
     order.email,

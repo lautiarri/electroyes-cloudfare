@@ -1,11 +1,55 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Trash2, Minus, Plus, ArrowLeft, ShoppingBag } from "lucide-react";
+import { Trash2, Minus, Plus, ArrowLeft, ShoppingBag, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useCart } from "../context/CartContext";
 import { formatPrice } from "../lib/format";
+import api from "../lib/api";
+
+const WHATSAPP_NUMBER = "5491151529070";
 
 export default function Cart() {
-  const { items, updateQty, removeItem, total } = useCart();
+  const { items, updateQty, removeItem, total, clear } = useCart();
   const nav = useNavigate();
+  const [waSubmitting, setWaSubmitting] = useState(false);
+
+  const buildWhatsAppMessage = () => {
+    const lines = [
+      "Hola, estoy interesado en estos productos:",
+      "",
+      ...items.map(
+        (i) => `• ${i.quantity} x ${i.name} (cód. ${i.code}) — ${formatPrice(i.unit_price)} c/u = ${formatPrice(i.quantity * i.unit_price)}`
+      ),
+      "",
+      `Total: ${formatPrice(total)}`,
+    ];
+    return lines.join("\n");
+  };
+
+  const handleWhatsApp = async () => {
+    if (waSubmitting) return;
+    setWaSubmitting(true);
+    const message = buildWhatsAppMessage();
+    const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    try {
+      await api.createOrder({
+        channel: "whatsapp",
+        items: items.map((i) => ({
+          product_id: i.product_id,
+          code: i.code,
+          name: i.name,
+          quantity: i.quantity,
+          unit_price: i.unit_price,
+          subtotal: i.unit_price * i.quantity,
+        })),
+      });
+      clear();
+      window.location.href = waUrl;
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || "No se pudo generar el pedido");
+      setWaSubmitting(false);
+    }
+  };
 
   if (items.length === 0) {
     return (
@@ -96,9 +140,22 @@ export default function Cart() {
           <button
             onClick={() => nav("/tienda/checkout")}
             className="btn-coral w-full justify-center mt-6"
-            data-testid="generate-order-btn"
+            data-testid="generate-order-mail-btn"
           >
-            GENERAR PEDIDO
+            GENERAR PEDIDO POR MAIL
+          </button>
+          <button
+            onClick={handleWhatsApp}
+            disabled={waSubmitting}
+            className="btn-coral w-full justify-center mt-3"
+            data-testid="generate-order-whatsapp-btn"
+            style={{ background: "#25D366", borderColor: "#25D366" }}
+          >
+            {waSubmitting ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Generando…</>
+            ) : (
+              <>GENERAR PEDIDO POR WHATSAPP</>
+            )}
           </button>
           <p className="text-[11px] text-neutral-400 mt-3 text-center leading-relaxed">
             Al generar el pedido nos comunicaremos con vos para coordinar el pago y la entrega.

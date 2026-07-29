@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Navigate, Link, useNavigate } from "react-router-dom";
-import { Plus, Edit2, Trash2, LogOut, Package, ClipboardList, X, Upload, ChevronLeft } from "lucide-react";
+import { Plus, Edit2, Trash2, LogOut, Package, ClipboardList, X, Upload, ChevronLeft, BarChart3, Download } from "lucide-react";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 import api from "../../lib/api";
 import { formatPrice } from "../../lib/format";
 
@@ -73,9 +74,10 @@ export default function AdminDashboard() {
         </button>
       </div>
 
-      <div className="flex gap-2 border-b border-[hsl(var(--border))] mb-6">
+      <div className="flex gap-2 border-b border-[hsl(var(--border))] mb-6 overflow-x-auto no-scrollbar">
         <TabBtn active={tab === "products"} onClick={() => setTab("products")} icon={<Package className="w-4 h-4" />} label={`Productos (${products.length})`} testId="tab-products" />
         <TabBtn active={tab === "orders"} onClick={() => setTab("orders")} icon={<ClipboardList className="w-4 h-4" />} label={`Pedidos (${orders.length})`} testId="tab-orders" />
+        <TabBtn active={tab === "reports"} onClick={() => setTab("reports")} icon={<BarChart3 className="w-4 h-4" />} label="Reportes" testId="tab-reports" />
       </div>
 
       {tab === "products" && (
@@ -179,7 +181,158 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {tab === "reports" && <ReportsTab orders={orders} loading={loading} />}
+
       {showForm && <ProductForm initial={editing} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); }} />}
+    </div>
+  );
+}
+
+function ReportsTab({ orders, loading }) {
+  const totalSales = orders.reduce((s, o) => s + Number(o.total || 0), 0);
+  const mailCount = orders.filter((o) => (o.channel || "mail") === "mail").length;
+  const waCount = orders.filter((o) => o.channel === "whatsapp").length;
+
+  const exportExcel = () => {
+    if (!orders.length) {
+      toast.error("No hay pedidos para exportar");
+      return;
+    }
+    // One row per item, replicating order-level info for easy pivoting in Excel.
+    const rows = [];
+    for (const o of orders) {
+      const items = o.items || [];
+      if (items.length === 0) {
+        rows.push({
+          "ID Pedido": o.id,
+          "Fecha": new Date(o.created_at).toLocaleString("es-AR"),
+          "Canal": o.channel || "mail",
+          "Nombre": o.first_name,
+          "Apellido": o.last_name,
+          "Teléfono": o.phone,
+          "Email": o.email,
+          "Código Producto": "",
+          "Producto": "",
+          "Cantidad": "",
+          "Precio Unitario": "",
+          "Subtotal": "",
+          "Total Pedido": Number(o.total || 0),
+          "Mail al admin": o.email_sent ? "Sí" : "No",
+          "Mail al cliente": o.customer_email_sent ? "Sí" : "No",
+        });
+      } else {
+        for (const it of items) {
+          rows.push({
+            "ID Pedido": o.id,
+            "Fecha": new Date(o.created_at).toLocaleString("es-AR"),
+            "Canal": o.channel || "mail",
+            "Nombre": o.first_name,
+            "Apellido": o.last_name,
+            "Teléfono": o.phone,
+            "Email": o.email,
+            "Código Producto": it.code,
+            "Producto": it.name,
+            "Cantidad": it.quantity,
+            "Precio Unitario": it.unit_price,
+            "Subtotal": it.subtotal,
+            "Total Pedido": Number(o.total || 0),
+            "Mail al admin": o.email_sent ? "Sí" : "No",
+            "Mail al cliente": o.customer_email_sent ? "Sí" : "No",
+          });
+        }
+      }
+    }
+    const ws = XLSX.utils.json_to_sheet(rows);
+    // Set column widths
+    ws["!cols"] = [
+      { wch: 36 }, { wch: 18 }, { wch: 10 }, { wch: 14 }, { wch: 14 },
+      { wch: 14 }, { wch: 24 }, { wch: 14 }, { wch: 32 }, { wch: 8 },
+      { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 14 },
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Ventas");
+    const stamp = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `electroyes-ventas-${stamp}.xlsx`);
+    toast.success("Excel generado");
+  };
+
+  if (loading) return <div className="text-center py-16 text-neutral-400">Cargando...</div>;
+
+  return (
+    <div data-testid="reports-tab">
+      <div className="grid sm:grid-cols-4 gap-4 mb-6">
+        <StatCard label="Pedidos totales" value={orders.length} testId="stat-total-orders" />
+        <StatCard label="Facturación" value={formatPrice(totalSales)} testId="stat-total-sales" />
+        <StatCard label="Por Mail" value={mailCount} testId="stat-mail-orders" />
+        <StatCard label="Por WhatsApp" value={waCount} testId="stat-wa-orders" />
+      </div>
+
+      <div className="flex justify-end mb-4">
+        <button onClick={exportExcel} className="btn-coral inline-flex items-center gap-2" data-testid="export-excel-btn">
+          <Download className="w-4 h-4" /> Exportar a Excel
+        </button>
+      </div>
+
+      {orders.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-2xl border">Aún no hay pedidos para reportar.</div>
+      ) : (
+        <div className="overflow-x-auto bg-white rounded-2xl border border-[hsl(var(--border))]">
+          <table className="w-full text-sm" data-testid="reports-table">
+            <thead className="bg-[hsl(var(--ey-cream))] text-xs uppercase text-[hsl(var(--ey-ink-soft))]">
+              <tr>
+                <th className="text-left px-4 py-3">ID</th>
+                <th className="text-left px-4 py-3">Fecha</th>
+                <th className="text-left px-4 py-3">Canal</th>
+                <th className="text-left px-4 py-3">Cliente</th>
+                <th className="text-left px-4 py-3">Contacto</th>
+                <th className="text-left px-4 py-3">Productos</th>
+                <th className="text-right px-4 py-3">Total</th>
+                <th className="text-center px-4 py-3">Mail</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orders.map((o) => (
+                <tr key={o.id} className="border-t border-[hsl(var(--border))]" data-testid={`report-row-${o.id.slice(0,8)}`}>
+                  <td className="px-4 py-3 font-mono text-xs">#{o.id.slice(0,8).toUpperCase()}</td>
+                  <td className="px-4 py-3 whitespace-nowrap">{new Date(o.created_at).toLocaleString("es-AR")}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                      o.channel === "whatsapp" ? "bg-[#25D366]/10 text-[#128C7E]" : "bg-[hsl(var(--ey-coral-soft))] text-[hsl(var(--ey-coral-strong))]"
+                    }`}>
+                      {o.channel === "whatsapp" ? "WhatsApp" : "Mail"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">{o.first_name} {o.last_name}</td>
+                  <td className="px-4 py-3">
+                    <div className="text-xs">{o.email}</div>
+                    <div className="text-xs text-neutral-400">{o.phone}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="space-y-0.5">
+                      {(o.items || []).map((i) => (
+                        <div key={i.code} className="text-xs">
+                          <span className="font-semibold">{i.quantity}×</span> {i.name} <span className="text-neutral-400">({i.code})</span>
+                        </div>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-right font-bold" style={{ color: "hsl(var(--ey-coral-strong))" }}>{formatPrice(o.total)}</td>
+                  <td className="px-4 py-3 text-center text-xs">{o.email_sent ? "✅" : (o.channel === "whatsapp" ? "—" : "⚠️")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StatCard({ label, value, testId }) {
+  return (
+    <div className="bg-white rounded-2xl border border-[hsl(var(--border))] p-5" data-testid={testId}>
+      <div className="text-xs uppercase tracking-wider text-[hsl(var(--ey-ink-soft))] font-bold">{label}</div>
+      <div className="text-2xl font-extrabold mt-1">{value}</div>
     </div>
   );
 }
