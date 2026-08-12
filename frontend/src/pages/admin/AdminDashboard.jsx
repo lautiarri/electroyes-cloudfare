@@ -198,7 +198,6 @@ function ReportsTab({ orders, loading }) {
       toast.error("No hay pedidos para exportar");
       return;
     }
-    // One row per item, replicating order-level info for easy pivoting in Excel.
     const rows = [];
     for (const o of orders) {
       const items = o.items || [];
@@ -243,7 +242,6 @@ function ReportsTab({ orders, loading }) {
       }
     }
     const ws = XLSX.utils.json_to_sheet(rows);
-    // Set column widths
     ws["!cols"] = [
       { wch: 36 }, { wch: 18 }, { wch: 10 }, { wch: 14 }, { wch: 14 },
       { wch: 14 }, { wch: 24 }, { wch: 14 }, { wch: 32 }, { wch: 8 },
@@ -420,8 +418,8 @@ function ProductForm({ initial, onClose, onSaved }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-2xl my-8" onClick={(e) => e.stopPropagation()} data-testid="product-form-modal">
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto" data-testid="product-form-backdrop">
+      <div className="bg-white rounded-2xl w-full max-w-2xl my-8" data-testid="product-form-modal">
         <div className="flex items-center justify-between p-5 border-b">
           <h3 className="text-xl font-extrabold">{initial ? "Editar producto" : "Nuevo producto"}</h3>
           <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-lg"><X className="w-5 h-5" /></button>
